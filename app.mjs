@@ -342,18 +342,36 @@ app.post('/api/items/:itemId/comments/:commentId/thumbUp', isAuthenticated, func
     );
   });
 
-  app.delete('/api/items/:itemId/comments/:commentId', isAuthenticated, function (req, res, next) {
-    const { itemId, commentId } = req.params;
-    const userId = req.session.user._id;
+  app.delete('/api/items/:itemId/comments/:commentId', isAuthenticated, function (req, res) {
+    const itemId = req.params.itemId;
+    const commentId = req.params.commentId;
+    const userId = req.session.user._id; // 当前用户
   
-    // 确认是否为评论者或照片拥有者
-    items.update(
-      { _id: itemId, $or: [{ owner: userId }, { "comments._id": commentId, "comments.owner": userId }] },
-      { $pull: { comments: { _id: commentId } } },
-      function (err, numAffected) {
-        if (err) return res.status(500).end(err);
-        res.status(200).end();
+    // 查找项目并删除对应的评论
+    items.findOne({ _id: itemId }, function (err, item) {
+      if (err) return res.status(500).end(err);
+      if (!item) return res.status(404).end("Item not found");
+  
+      // 查找该评论并检查权限
+      const comment = item.comments.find(c => c._id == commentId);
+      if (!comment) return res.status(404).end("Comment not found");
+  
+      // 检查是否为评论创建者或项目所有者
+      if (comment.owner !== userId && item.owner !== userId) {
+        return res.status(403).end("You do not have permission to delete this comment");
       }
-    );
+  
+      // 从项目中移除评论
+      items.update(
+        { _id: itemId },
+        { $pull: { comments: { _id: commentId } } }, // 删除评论
+        {},
+        function (err) {
+          if (err) return res.status(500).end(err);
+          res.status(200).end(); // 评论删除成功
+        }
+      );
+    });
   });
+  
   

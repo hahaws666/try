@@ -1,4 +1,4 @@
-import {  getUserItem, addItemWithImage, getUserrs, deleteItem, getCurrentUser, addComment, deleteComment } from "./api.mjs";
+import { getUserItem, addItemWithImage, getUserrs, deleteItem, getCurrentUser, addComment, deleteComment } from "./api.mjs";
 
 let page = 0; // Current page
 let userItems = []; // Store all user items
@@ -70,7 +70,6 @@ function update() {
         document.querySelector("#add_item").classList.add("hidden");
       }
       userItems = items; // Store fetched items
-      page = 0; // Reset page index when new user is selected
       displayPage(); // Display the first page
     }, onError);
   }
@@ -123,7 +122,7 @@ function displayPage() {
     // Now, we are adding the comments
     let commentElement = document.createElement("div");
     commentElement.className = "comments";
-    
+
     // Show existing comments
     if (item.comments && item.comments.length > 0) {
       item.comments.forEach(comment => {
@@ -134,14 +133,23 @@ function displayPage() {
         `;
 
         // Allow deleting comment if the user is the owner or the comment creator
-        if (comment.owner === username || item.owner === username) {
-          let deleteCommentBtn = document.createElement("button");
-          deleteCommentBtn.textContent = "Delete Comment";
-          deleteCommentBtn.addEventListener("click", function () {
-            deleteComment(item._id, comment._id, onError, update); // API call to delete the comment
+        if (comment.owner == username || item.owner == username) {
+          // 改用创建元素而不是直接使用 innerHTML
+          let deleteButton = document.createElement("div");
+          deleteButton.className = "deleteComment icon";
+          deleteButton.textContent = "delete";
+
+          // 插入删除按钮
+          commentDiv.appendChild(deleteButton);
+
+          // 绑定点击事件
+          deleteButton.addEventListener("click", function () {
+            alert("lalal");
           });
-          commentDiv.appendChild(deleteCommentBtn);
+
+
         }
+
 
         commentElement.appendChild(commentDiv);
       });
@@ -163,7 +171,6 @@ function displayPage() {
       e.preventDefault();
       const commentContent = document.querySelector("#comment_input").value;
       addComment(item._id, commentContent, onError, update); // Call API to add comment
-      update();
     });
 
   } else {
@@ -194,7 +201,7 @@ document.querySelector("#add_item").addEventListener("submit", function (e) {
 
   let content = document.querySelector("#content_form").value;
   let image = document.querySelector("#image_form").files[0]; // Get the selected image file
-  
+
   document.querySelector("#add_item").reset();
 
   // Use the addItemWithImage function from api.mjs
@@ -223,5 +230,5 @@ document.addEventListener("DOMContentLoaded", function () {
 
 (function refresh() {
   update();
-  setTimeout(refresh, 5000);
+  setTimeout(refresh, 50000);
 })();

@@ -120,6 +120,7 @@ export function getUserItem(userId, success, fail) {
   
   export function deleteComment(itemId, commentId,fail,success) {
 	fetch(`/api/items/${itemId}/comments/${commentId}`, { method: "DELETE" })
+	.then(handleReponse)
 	  .then(success)
 	  .catch(fail);
   }
