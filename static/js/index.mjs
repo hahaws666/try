@@ -163,6 +163,7 @@ function displayPage() {
       e.preventDefault();
       const commentContent = document.querySelector("#comment_input").value;
       addComment(item._id, commentContent, onError, update); // Call API to add comment
+      update();
     });
 
   } else {

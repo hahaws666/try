@@ -90,32 +90,20 @@ export function getUserItem(userId, success, fail) {
   }
   
 
-  export function addComment(itemId, content) {
+  export function addComment(itemId, content,fail,success) {
 	fetch(`/api/items/${itemId}/comments`, {
 	  method: "POST",
 	  headers: { "Content-Type": "application/json" },
 	  body: JSON.stringify({ content })
 	})
-	.then(response => {
-	  if (response.ok) {
-		update(); // Reload the item to show the new comment
-	  } else {
-		throw new Error("Failed to add comment");
-	  }
-	})
-	.catch(onError);
+	.then(success)
+	.catch(fail);
   }
   
-  export function thumbUpComment(itemId, commentId) {
+  export function thumbUpComment(itemId, commentId,fail,success) {
 	fetch(`/api/items/${itemId}/comments/${commentId}/thumbUp`, { method: "POST" })
-	  .then(response => {
-		if (response.ok) {
-		  update(); // Reload the item to show updated likes
-		} else {
-		  throw new Error("Failed to thumb up comment");
-		}
-	  })
-	  .catch(onError);
+	  .then(success)
+	  .catch(fail);
   }
   
   export function thumbDownComment(itemId, commentId,fail,success) {
