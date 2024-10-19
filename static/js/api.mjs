@@ -89,3 +89,56 @@ export function getUserItem(userId, success, fail) {
 	.catch(fail);
   }
   
+
+  export function addComment(itemId, content) {
+	fetch(`/api/items/${itemId}/comments`, {
+	  method: "POST",
+	  headers: { "Content-Type": "application/json" },
+	  body: JSON.stringify({ content })
+	})
+	.then(response => {
+	  if (response.ok) {
+		update(); // Reload the item to show the new comment
+	  } else {
+		throw new Error("Failed to add comment");
+	  }
+	})
+	.catch(onError);
+  }
+  
+  export function thumbUpComment(itemId, commentId) {
+	fetch(`/api/items/${itemId}/comments/${commentId}/thumbUp`, { method: "POST" })
+	  .then(response => {
+		if (response.ok) {
+		  update(); // Reload the item to show updated likes
+		} else {
+		  throw new Error("Failed to thumb up comment");
+		}
+	  })
+	  .catch(onError);
+  }
+  
+  export function thumbDownComment(itemId, commentId) {
+	fetch(`/api/items/${itemId}/comments/${commentId}/thumbDown`, { method: "POST" })
+	  .then(response => {
+		if (response.ok) {
+		  update(); // Reload the item to show updated dislikes
+		} else {
+		  throw new Error("Failed to thumb down comment");
+		}
+	  })
+	  .catch(onError);
+  }
+  
+  export function deleteComment(itemId, commentId) {
+	fetch(`/api/items/${itemId}/comments/${commentId}`, { method: "DELETE" })
+	  .then(response => {
+		if (response.ok) {
+		  update(); // Reload the item to remove the deleted comment
+		} else {
+		  throw new Error("Failed to delete comment");
+		}
+	  })
+	  .catch(onError);
+  }
+  

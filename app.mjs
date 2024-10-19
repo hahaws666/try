@@ -242,3 +242,60 @@ app.get("/todos/:id", function (req, res, next) {
         res.json(userItems);
     });
 });
+
+app.post('/api/items/:id/comments', isAuthenticated, function (req, res, next) {
+    const itemId = req.params.id;
+    const { content } = req.body;
+    const owner = req.session.user._id; // 评论者
+    
+    items.update({ _id: itemId }, {
+      $push: { comments: { _id: new Date().getTime(), content, owner, likes: 0, dislikes: 0 } }
+    }, function (err, numAffected) {
+      if (err) return res.status(500).end(err);
+      res.status(201).end(); // 评论添加成功
+    });
+  });
+
+// 点赞评论
+app.post('/api/items/:itemId/comments/:commentId/thumbUp', isAuthenticated, function (req, res, next) {
+    const { itemId, commentId } = req.params;
+    
+    items.update(
+      { _id: itemId, "comments._id": commentId },
+      { $inc: { "comments.$.likes": 1 } },
+      function (err, numAffected) {
+        if (err) return res.status(500).end(err);
+        res.status(200).end();
+      }
+    );
+  });
+  
+  // 点踩评论
+  app.post('/api/items/:itemId/comments/:commentId/thumbDown', isAuthenticated, function (req, res, next) {
+    const { itemId, commentId } = req.params;
+    
+    items.update(
+      { _id: itemId, "comments._id": commentId },
+      { $inc: { "comments.$.dislikes": 1 } },
+      function (err, numAffected) {
+        if (err) return res.status(500).end(err);
+        res.status(200).end();
+      }
+    );
+  });
+
+  app.delete('/api/items/:itemId/comments/:commentId', isAuthenticated, function (req, res, next) {
+    const { itemId, commentId } = req.params;
+    const userId = req.session.user._id;
+  
+    // 确认是否为评论者或照片拥有者
+    items.update(
+      { _id: itemId, $or: [{ owner: userId }, { "comments._id": commentId, "comments.owner": userId }] },
+      { $pull: { comments: { _id: commentId } } },
+      function (err, numAffected) {
+        if (err) return res.status(500).end(err);
+        res.status(200).end();
+      }
+    );
+  });
+  

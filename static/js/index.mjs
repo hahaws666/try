@@ -1,6 +1,7 @@
 import { getItems, getUserItem, addItemWithImage, getUserrs, deleteItem, getCurrentUser } from "./api.mjs";
 
-let page = 0;
+let page = 0; // Current page
+let userItems = []; // Store all user items
 let inspecting = null;
 
 function onError(err) {
@@ -21,75 +22,97 @@ if (username) {
   document.querySelector("#signup").classList.remove("hidden");
 }
 
-function update() {
-  // Fetch the list of users
-  getUserrs(onError, function (users) {
-    document.querySelector("#users").innerHTML = ""; // Clear the existing users list
-
-    users.forEach(function (user) {
-      let element = document.createElement("div");
-      element.innerHTML = `
-        <button class="user_content" data-user-id="${user._id}">${user._id}</button>
-      `;
-      document.querySelector("#users").prepend(element);
-    });
-  });
-
-  if (inspecting != null) {
-    getUserItem(inspecting, function (userItems) {
-      // Show the add item form only if the logged-in user is viewing their own items
-      if (inspecting === username) {
-        document.querySelector("#add_item").classList.remove("hidden");
-      } else {
-        document.querySelector("#add_item").classList.add("hidden");
-      }
+  function update() {
+    // Fetch the list of users
+    getUserrs(onError, function (users) {
+      document.querySelector("#users").innerHTML = ""; // Clear the existing users list
   
-      // Clear existing items before displaying new ones
-      document.querySelector("#user_item").innerHTML = "";
-  
-      // Loop through and display each item
-      userItems.forEach(item => {
+      users.forEach(function (user) {
         let element = document.createElement("div");
-        element.className = "item";
-        
-        // Add content
-        element.innerHTML = `<div class="item_content">${item.content}</div>`;
-  
-        // If the item has an image, display it
-        if (item.imageUrl) {
-          element.innerHTML += `
-            <div class="item_image">
-              <img src="${item.imageUrl}" alt="To-Do image" style="max-width: 200px; margin-top: 10px;" />
-            </div>
-          `;
-        }
-  
-        // If the item belongs to the logged-in user, add a delete option
-        if (item.owner === username) {
-          element.innerHTML += `<div class="delete-icon icon"></div>`;
-          element.querySelector(".delete-icon").addEventListener("click", function () {
-            deleteItem(item._id, onError, update);
-          });
-        }
-  
-        // Prepend the new item element to the user_item container
-        document.querySelector("#user_item").prepend(element);
+        element.innerHTML = `
+          <button class="user_content" data-user-id="${user._id}">${user._id}</button>
+        `;
+        document.querySelector("#users").prepend(element);
       });
-    }, onError);
+    });
+  
+    if (inspecting != null) {
+      getUserItem(inspecting, function (items) {
+        if (inspecting === username) {
+          document.querySelector("#add_item").classList.remove("hidden");
+        } else {
+          document.querySelector("#add_item").classList.add("hidden");
+        }
+        userItems = items; // Store fetched items
+        page = 0; // Reset page index when new user is selected
+        displayPage(); // Display the first page
+      }, onError);
+    }
   }
   
-}
+  // Function to display the current page (one item at a time)
+  function displayPage() {
+    // Ensure page is within valid range
+    if (page < 0) page = 0;
+    if (page >= userItems.length) page = userItems.length - 1;
+  
+    // Clear existing items
+    document.querySelector("#user_item").innerHTML = "";
+  
+    // Display the current item
+    if (userItems.length > 0) {
+      const item = userItems[page]; // Get current item based on page index
+  
+      let element = document.createElement("div");
+      element.className = "item";
+  
+      // Add content
+      element.innerHTML = `<div class="item_content">${item.content}</div>`;
+  
+      // If the item has an image, display it
+      if (item.imageUrl) {
+        element.innerHTML += `
+          <div class="item_image">
+            <img src="${item.imageUrl}" alt="To-Do image" style="max-width: 200px; margin-top: 10px;" />
+          </div>
+        `;
+      }
+  
+      // If the item belongs to the logged-in user, add a delete option
+      if (item.owner === username) {
+        element.innerHTML += `<div class="delete-icon icon"></div>`;
+        element.querySelector(".delete-icon").addEventListener("click", function () {
+          deleteItem(item._id, onError, update);
+        });
+      }
+  
+      // Prepend the new item element to the user_item container
+      document.querySelector("#user_item").prepend(element);
+  
+      // Update pagination controls visibility
+      document.querySelector("#prev").style.visibility = page === 0 ? "hidden" : "visible";
+      document.querySelector("#next").style.visibility = page === userItems.length - 1 ? "hidden" : "visible";
+    } else {
+      document.querySelector("#user_item").innerHTML = "<p>No items found</p>";
+      document.querySelector("#prev").style.visibility = "hidden";
+      document.querySelector("#next").style.visibility = "hidden";
+    }
+  }
 
 document.querySelector("#prev").addEventListener("click", function (e) {
   e.preventDefault();
-  page = Math.max(0, page - 1);
-  update();
+  if (page > 0) {
+    page--; // Go to the previous page
+    displayPage(); // Display the updated page
+  }
 });
 
 document.querySelector("#next").addEventListener("click", function (e) {
   e.preventDefault();
-  page = page + 1;
-  update();
+  if (page < userItems.length - 1) {
+    page++; // Go to the next page
+    displayPage(); // Display the updated page
+  }
 });
 
 document.querySelector("#add_item").addEventListener("submit", function (e) {
@@ -114,30 +137,12 @@ document.addEventListener("DOMContentLoaded", function () {
       const userId = e.target.textContent; // Get the user's id from the button text
       inspecting = userId;
 
-      getUserItem(userId, function (userItems) {
-        if (userId === username) {
-          document.querySelector("#add_item").classList.remove("hidden");
-        } else {
-          document.querySelector("#add_item").classList.add("hidden");
-        }
-
-        document.querySelector("#user_item").innerHTML = ""; // Clear existing items
-
-        userItems.forEach(item => {
-          let element = document.createElement("div");
-          element.className = "item";
-          element.innerHTML = `<div class="item_content">${item.content}</div>`;
-
-          if (item.owner === username) {
-            element.innerHTML += `<div class="delete-icon icon"></div>`;
-            element.querySelector(".delete-icon").addEventListener("click", function () {
-              deleteItem(item._id, onError, update);
-            });
-          }
-
-          document.querySelector("#user_item").prepend(element);
-        });
+      getUserItem(userId, function (items) {
+        userItems = items;
+        page = 0; // Reset to the first page
+        displayPage(); // Display the first item
       }, onError);
+      update();
     }
   });
 });
