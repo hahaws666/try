@@ -58,6 +58,7 @@ if (username) {
   
     // Clear existing items
     document.querySelector("#user_item").innerHTML = "";
+    document.querySelector("#comments").innerHTML ="";
   
     // Display the current item
     if (userItems.length > 0) {
@@ -92,11 +93,23 @@ if (username) {
       // Update pagination controls visibility
       document.querySelector("#prev").style.visibility = page === 0 ? "hidden" : "visible";
       document.querySelector("#next").style.visibility = page === userItems.length - 1 ? "hidden" : "visible";
+
+      //now we are adding the comments
+      let commentElement = document.createElement("div");
+      commentElement.className  = "comments";
+      commentElement.innerHTML = `
+              <form id="add_comment">
+          <input type="text" id="comment_input" placeholder="Add a comment..." required />
+          <button type="submit" class = "commentsubmit">Submit</button> <!-- Add the submit button here -->
+        </form>`
+      document.querySelector("#comments").prepend(commentElement);
+
     } else {
       document.querySelector("#user_item").innerHTML = "<p>No items found</p>";
       document.querySelector("#prev").style.visibility = "hidden";
       document.querySelector("#next").style.visibility = "hidden";
     }
+
   }
 
 document.querySelector("#prev").addEventListener("click", function (e) {
