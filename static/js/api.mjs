@@ -118,7 +118,7 @@ export function getUserItem(userId, success, fail) {
 	  .catch(onError);
   }
   
-  export function thumbDownComment(itemId, commentId) {
+  export function thumbDownComment(itemId, commentId,fail,success) {
 	fetch(`/api/items/${itemId}/comments/${commentId}/thumbDown`, { method: "POST" })
 	  .then(response => {
 		if (response.ok) {
@@ -130,15 +130,23 @@ export function getUserItem(userId, success, fail) {
 	  .catch(onError);
   }
   
-  export function deleteComment(itemId, commentId) {
+  export function deleteComment(itemId, commentId,fail,success) {
 	fetch(`/api/items/${itemId}/comments/${commentId}`, { method: "DELETE" })
-	  .then(response => {
-		if (response.ok) {
-		  update(); // Reload the item to remove the deleted comment
-		} else {
-		  throw new Error("Failed to delete comment");
-		}
-	  })
-	  .catch(onError);
+	  .then(success)
+	  .catch(fail);
   }
   
+
+//   export function signin(username, password, success, fail) {
+	
+// 	fetch("/signin", {
+// 	  method: "POST",
+// 	  headers: {
+// 		"Content-Type": "application/json",
+// 	  },
+// 	  body: JSON.stringify({ username, password }), // Send the form data as JSON
+// 	})
+// 	  .then(handleReponse)
+// 	  .then(success)
+// 	  .catch(fail);
+//   }

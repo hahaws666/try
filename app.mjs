@@ -30,6 +30,7 @@ if (!fs.existsSync(uploadDir)) {
 let users = new Datastore({ filename: 'db/users.db', autoload: true });
 let items = new Datastore({ filename: 'db/items.db', autoload: true, timestampData: true });
 
+
 // Set up multer for file uploads
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
@@ -191,6 +192,63 @@ app.get("/api/users", function (req, res, next) {
         return res.json(users.reverse())
     });
 });
+
+
+
+app.post('/api/items/:id/comments', isAuthenticated, function (req, res) {
+    const itemId = req.params.id;
+    const { content } = req.body;
+    const owner = req.session.user._id; // 评论创建者
+
+    // 创建评论对象
+    const comment = {
+        _id: new Date().getTime(), // 简单的唯一ID
+        content: validator.escape(content), // 清理输入
+        owner: owner, // 评论者
+        createdAt: new Date()
+    };
+
+    // 将评论添加到项目中
+    items.update({ _id: itemId }, { $push: { comments: comment } }, {}, function (err) {
+        if (err) return res.status(500).end(err);
+        res.status(201).end(); // 评论添加成功
+    });
+});
+
+app.delete('/api/items/:itemId/comments/:commentId', isAuthenticated, function (req, res) {
+    const itemId = req.params.itemId;
+    const commentId = req.params.commentId;
+    const userId = req.session.user._id; // 当前用户
+
+    // 查找项目并删除对应的评论
+    items.findOne({ _id: itemId }, function (err, item) {
+        if (err) return res.status(500).end(err);
+        if (!item) return res.status(404).end("Item not found");
+
+        // 查找该评论并检查权限
+        const comment = item.comments.find(c => c._id == commentId);
+        if (!comment) return res.status(404).end("Comment not found");
+
+        // 检查是否为评论创建者或项目所有者
+        if (comment.owner !== userId && item.owner !== userId) {
+            return res.status(403).end("You do not have permission to delete this comment");
+        }
+
+        // 从项目中移除评论
+        items.update(
+            { _id: itemId },
+            { $pull: { comments: { _id: commentId } } },
+            {},
+            function (err) {
+                if (err) return res.status(500).end(err);
+                res.status(200).end(); // 评论删除成功
+            }
+        );
+    });
+});
+
+
+
 
 app.use('/uploads', express.static('uploads'));
 app.use(express.static("static"));
