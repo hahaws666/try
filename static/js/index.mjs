@@ -119,52 +119,79 @@ function displayPage() {
     document.querySelector("#prev").style.visibility = page === 0 ? "hidden" : "visible";
     document.querySelector("#next").style.visibility = page === userItems.length - 1 ? "hidden" : "visible";
 
+
+
     // Now, we are adding the comments
     let commentElement = document.createElement("div");
-    commentElement.className = "comments";
-
-    // Show existing comments
-    if (item.comments && item.comments.length > 0) {
-      item.comments.forEach(comment => {
-        let commentDiv = document.createElement("div");
-        commentDiv.className = "comment";
-        commentDiv.innerHTML = `
-          <p>${comment.content} - by ${comment.owner}</p>
-        `;
-
-        // Allow deleting comment if the user is the owner or the comment creator
-        if (comment.owner == username || item.owner == username) {
-          // 改用创建元素而不是直接使用 innerHTML
-          let deleteButton = document.createElement("div");
-          deleteButton.className = "deleteComment icon";
-          deleteButton.textContent = "delete";
-
-          // 插入删除按钮
-          commentDiv.appendChild(deleteButton);
-
-          // 绑定点击事件
-          deleteButton.addEventListener("click", function () {
-            alert("lalal");
-          });
+    commentElement.className = "commentelement";
 
 
-        }
-
-
-        commentElement.appendChild(commentDiv);
-      });
-    } else {
-      commentElement.innerHTML = "<p>No comments yet.</p>";
+// Show existing comments
+if (item.comments && item.comments.length > 0) {
+  item.comments.forEach(comment => {
+    if(comment.deleted ==0){
+    // 为每个评论创建单独的 div 容器
+    let commentDiv = document.createElement("div");
+    commentDiv.className = "comment";
+    commentDiv.innerHTML = `
+      <p>${comment.content} - by ${comment.owner}</p>
+    `;
+    if (comment.owner == item.owner || username == comment.owner) {
+      commentDiv.innerHTML+=`<div type="button" class="icon deletecomment" data-item-id="${item._id}" data-comment-id="${comment._id}">delete</div>`
+      
     }
 
+
+    // commentDiv.querySelector(".deletecomment").addEventListener("click", function() {
+    //   console.log("删除按钮点击，评论 ID:", comment._id);  // 你可以在这里使用 comment._id 来确认
+    // });
+
+    // 将每个评论的 div 容器追加到 commentElement
+    commentElement.appendChild(commentDiv);
+    }
+  });
+
+  // 将 commentElement 追加到 #comments 容器中
+  document.querySelector("#comments").prepend(commentElement);
+
+} else {
+  commentElement.innerHTML = "<p>No comments yet.</p>";
+  document.querySelector("#comments").prepend(commentElement);
+}
+
+// document.querySelector("#comments").addEventListener("click", function (e) {
+//   if (e.target && e.target.classList.contains("deletecomment")) {
+//     const commentId = e.target.getAttribute("data-id");
+//     console.log("点击了删除按钮，评论 ID:", commentId);
+//     deleteComment(commentId, onError, function () {
+//       update(); // 删除成功后更新页面
+//     });
+//   }
+// });
+document.querySelector("#comments").addEventListener("click", function (e) {
+  if (e.target && e.target.classList.contains("deletecomment")) {
+    const itemId = e.target.getAttribute("data-item-id");
+    const commentId = e.target.getAttribute("data-comment-id");
+
+    console.log("点击了删除按钮，评论 ID:", commentId, "项目 ID:", itemId);
+
+    // 调用 API 删除评论，传递 itemId 和 commentId
+    deleteComment(itemId, commentId, onError, function () {
+      console.log("评论删除成功");
+      update(); // 删除成功后更新页面
+    });
+  }
+});
+
+
+
     // Add the form for adding new comments
-    commentElement.innerHTML += `
+    document.querySelector("#comments").innerHTML += `
       <form id="add_comment">
         <input type="text" id="comment_input" placeholder="Add a comment..." required />
         <button type="submit" class="commentsubmit">Submit</button>
       </form>
     `;
-    document.querySelector("#comments").prepend(commentElement);
 
     // Handle comment submission
     document.querySelector("#add_comment").addEventListener("submit", function (e) {
@@ -232,3 +259,4 @@ document.addEventListener("DOMContentLoaded", function () {
   update();
   setTimeout(refresh, 50000);
 })();
+

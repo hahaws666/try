@@ -205,7 +205,8 @@ app.post('/api/items/:id/comments', isAuthenticated, function (req, res) {
         _id: new Date().getTime(), // 简单的唯一ID
         content: validator.escape(content), // 清理输入
         owner: owner, // 评论者
-        createdAt: new Date()
+        createdAt: new Date(),
+        deleted: 0
     };
 
     // 将评论添加到项目中
@@ -214,41 +215,6 @@ app.post('/api/items/:id/comments', isAuthenticated, function (req, res) {
         res.status(201).end(); // 评论添加成功
     });
 });
-
-app.delete('/api/items/:itemId/comments/:commentId', isAuthenticated, function (req, res) {
-    const itemId = req.params.itemId;
-    const commentId = req.params.commentId;
-    const userId = req.session.user._id; // 当前用户
-
-    // 查找项目并删除对应的评论
-    items.findOne({ _id: itemId }, function (err, item) {
-        if (err) return res.status(500).end(err);
-        if (!item) return res.status(404).end("Item not found");
-
-        // 查找该评论并检查权限
-        const comment = item.comments.find(c => c._id == commentId);
-        if (!comment) return res.status(404).end("Comment not found");
-
-        // 检查是否为评论创建者或项目所有者
-        if (comment.owner !== userId && item.owner !== userId) {
-            return res.status(403).end("You do not have permission to delete this comment");
-        }
-
-        // 从项目中移除评论
-        items.update(
-            { _id: itemId },
-            { $pull: { comments: { _id: commentId } } },
-            {},
-            function (err) {
-                if (err) return res.status(500).end(err);
-                res.status(200).end(); // 评论删除成功
-            }
-        );
-    });
-});
-
-
-
 
 app.use('/uploads', express.static('uploads'));
 app.use(express.static("static"));
@@ -301,77 +267,39 @@ app.get("/todos/:id", function (req, res, next) {
     });
 });
 
-app.post('/api/items/:id/comments', isAuthenticated, function (req, res, next) {
-    const itemId = req.params.id;
-    const { content } = req.body;
-    const owner = req.session.user._id; // 评论者
-    
-    items.update({ _id: itemId }, {
-      $push: { comments: { _id: new Date().getTime(), content, owner, likes: 0, dislikes: 0 } }
-    }, function (err, numAffected) {
-      if (err) return res.status(500).end(err);
-      res.status(201).end(); // 评论添加成功
-    });
-  });
 
-// 点赞评论
-app.post('/api/items/:itemId/comments/:commentId/thumbUp', isAuthenticated, function (req, res, next) {
-    const { itemId, commentId } = req.params;
-    
-    items.update(
-      { _id: itemId, "comments._id": commentId },
-      { $inc: { "comments.$.likes": 1 } },
-      function (err, numAffected) {
-        if (err) return res.status(500).end(err);
-        res.status(200).end();
-      }
-    );
-  });
-  
-  // 点踩评论
-  app.post('/api/items/:itemId/comments/:commentId/thumbDown', isAuthenticated, function (req, res, next) {
-    const { itemId, commentId } = req.params;
-    
-    items.update(
-      { _id: itemId, "comments._id": commentId },
-      { $inc: { "comments.$.dislikes": 1 } },
-      function (err, numAffected) {
-        if (err) return res.status(500).end(err);
-        res.status(200).end();
-      }
-    );
-  });
-
-  app.delete('/api/items/:itemId/comments/:commentId', isAuthenticated, function (req, res) {
+app.patch('/api/items/:itemId/comments/:commentId', isAuthenticated, function (req, res) {
     const itemId = req.params.itemId;
     const commentId = req.params.commentId;
-    const userId = req.session.user._id; // 当前用户
-  
-    // 查找项目并删除对应的评论
+    const userId = req.session.user._id;
+
     items.findOne({ _id: itemId }, function (err, item) {
-      if (err) return res.status(500).end(err);
-      if (!item) return res.status(404).end("Item not found");
-  
-      // 查找该评论并检查权限
-      const comment = item.comments.find(c => c._id == commentId);
-      if (!comment) return res.status(404).end("Comment not found");
-  
-      // 检查是否为评论创建者或项目所有者
-      if (comment.owner !== userId && item.owner !== userId) {
-        return res.status(403).end("You do not have permission to delete this comment");
-      }
-  
-      // 从项目中移除评论
-      items.update(
-        { _id: itemId },
-        { $pull: { comments: { _id: commentId } } }, // 删除评论
-        {},
-        function (err) {
-          if (err) return res.status(500).end(err);
-          res.status(200).end(); // 评论删除成功
+        if (err) return res.status(500).json({ error: 'Database error' });
+        if (!item) return res.status(404).json({ error: 'Item not found' });
+
+        const commentIndex = item.comments.findIndex(c => c._id == commentId);
+        if (commentIndex === -1) return res.status(404).json({ error: 'Comment not found' });
+
+        const comment = item.comments[commentIndex];
+        if (comment.owner !== userId && item.owner !== userId) {
+            return res.status(403).json({ error: 'Permission denied' });
         }
-      );
+
+        // 手动设置 deleted 属性为 1
+        item.comments[commentIndex].deleted = 1;
+
+        // 保存整个项目
+        items.update({ _id: itemId }, item, {}, function (err, numAffected) {
+            if (err) return res.status(500).json({ error: 'Failed to update item' });
+            res.status(200).json({ message: 'Comment marked as deleted successfully' });
+        });
     });
-  });
+});
+
+
+
+
+
+
   
   

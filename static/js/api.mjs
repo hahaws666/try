@@ -118,24 +118,12 @@ export function getUserItem(userId, success, fail) {
 	  .catch(onError);
   }
   
-  export function deleteComment(itemId, commentId,fail,success) {
-	fetch(`/api/items/${itemId}/comments/${commentId}`, { method: "DELETE" })
+  export function deleteComment(itemId, commentId, onError, onSuccess) {
+	fetch(`/api/items/${itemId}/comments/${commentId}`, {
+	  method: 'PATCH',
+	})
 	.then(handleReponse)
-	  .then(success)
-	  .catch(fail);
+	.then(onSuccess)
+	.catch(onError);
   }
   
-
-//   export function signin(username, password, success, fail) {
-	
-// 	fetch("/signin", {
-// 	  method: "POST",
-// 	  headers: {
-// 		"Content-Type": "application/json",
-// 	  },
-// 	  body: JSON.stringify({ username, password }), // Send the form data as JSON
-// 	})
-// 	  .then(handleReponse)
-// 	  .then(success)
-// 	  .catch(fail);
-//   }

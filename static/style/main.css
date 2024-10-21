@@ -86,9 +86,8 @@ footer {
   background-image: url("../media/delete-icon.png");
   width: 100px;
 }
-.deleteComment{
+.deletecomment{
   color: rgb(226, 31, 31);
-  background-color: red;
 }
 #error_box {
   color: red;
