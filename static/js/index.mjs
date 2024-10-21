@@ -78,7 +78,7 @@ function displayPage() {
     if (item.imageUrl) {
       element.innerHTML += `
         <div class="item_image">
-          <img src="${item.imageUrl}" alt="To-Do image" />
+          <img src="${item.imageUrl}" alt="To-Do image"  />
         </div>
       `;
     }
