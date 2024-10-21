@@ -101,20 +101,6 @@ export function getUserItem(userId, success, fail) {
   }
   
   
-
-  export function voteComment(itemId, commentId, action, onError, onSuccess) {
-	fetch(`/api/items/${itemId}/comments/${commentId}/vote`, {
-	  method: 'PATCH',
-	  headers: {
-		'Content-Type': 'application/json'
-	  },
-	  body: JSON.stringify({ action }) // 发送 'up' 或 'down'
-	})
-	  .then(handleReponse)
-	  .then(onSuccess)
-	  .catch(onError);
-	console.log("lallal");
-  }
   
 
   
