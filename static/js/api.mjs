@@ -118,6 +118,26 @@ export function getUserItem(userId, success, fail) {
 	  .catch(onError);
   }
   
+
+  export function voteComment(itemId, commentId, action, onError, onSuccess) {
+	fetch(`/api/items/${itemId}/comments/${commentId}/vote`, {
+	  method: 'POST',
+	  headers: {
+		'Content-Type': 'application/json'
+	  },
+	  body: JSON.stringify({ action })
+	})
+	  .then(response => {
+		if (!response.ok) {
+		  return response.text().then(text => { throw new Error(text) });
+		}
+		return response.json();
+	  })
+	  .then(onSuccess)
+	  .catch(onError);
+  }
+
+  
   export function deleteComment(itemId, commentId, onError, onSuccess) {
 	fetch(`/api/items/${itemId}/comments/${commentId}`, {
 	  method: 'PATCH',
@@ -125,5 +145,6 @@ export function getUserItem(userId, success, fail) {
 	.then(handleReponse)
 	.then(onSuccess)
 	.catch(onError);
+
   }
   

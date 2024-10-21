@@ -107,6 +107,9 @@ app.post('/signup/', checkUsername, function (req, res, next) {
     });
 });
 
+
+
+
 // curl -X POST -d "username=admin&password=pass4admin" -c cookie.txt http://localhost:3000/signin/
 app.post('/signin/', checkUsername, function (req, res, next) {
     if (!('username' in req.body)) return res.status(400).end('username is missing');
@@ -206,7 +209,9 @@ app.post('/api/items/:id/comments', isAuthenticated, function (req, res) {
         content: validator.escape(content), // 清理输入
         owner: owner, // 评论者
         createdAt: new Date(),
-        deleted: 0
+        deleted: 0,
+        likes: 0,      // 初始化点赞数
+        dislikes: 0    // 初始化点踩数
     };
 
     // 将评论添加到项目中
@@ -297,6 +302,31 @@ app.patch('/api/items/:itemId/comments/:commentId', isAuthenticated, function (r
 });
 
 
+// 点赞和点踩评论（通过请求 body 参数指定）
+app.post('/api/items/:itemId/comments/:commentId/vote', isAuthenticated, function (req, res) {
+    const { itemId, commentId } = req.params;
+    const { action } = req.body; // action 为 'up' 或 'down'
+
+    let updateField;
+    if (action === 'up') {
+        updateField = { $inc: { "comments.$.likes": 1 } };
+    } else if (action === 'down') {
+        updateField = { $inc: { "comments.$.dislikes": 1 } };
+    } else {
+        return res.status(400).json({ error: 'Invalid action' });
+    }
+
+    items.update(
+        { _id: itemId, "comments._id": commentId },
+        updateField,
+        {},
+        function (err, numAffected) {
+            if (err) return res.status(500).json({ error: 'Failed to update comment' });
+            if (numAffected === 0) return res.status(404).json({ error: 'Comment not found' });
+            res.status(200).json({ message: 'Vote updated successfully' });
+        }
+    );
+});
 
 
 

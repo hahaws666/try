@@ -24,30 +24,6 @@ if (username) {
 
 
 
-// document.querySelector("#signin").addEventListener("submit", function (e) {
-//   e.preventDefault(); // Prevent the default form submission
-
-//   const username = document.querySelector("input[name='username']").value;
-//   const password = document.querySelector("input[name='password']").value;
-
-//   // Call the signin function from api.mjs
-//   signin(
-//     username,
-//     password,
-//     (data) => {
-//       // On successful login
-//       document.cookie = `username=${data.username}; path=/`; // Save username in cookie
-//       window.location.reload(); // Reload the page after successful login
-//     },
-//     (err) => {
-//       // On error
-//       const errorBox = document.querySelector("#error_box");
-//       errorBox.innerHTML = err.message;
-//       errorBox.style.visibility = "visible";
-//     }
-//   );
-// });
-
 function update() {
   // Fetch the list of users
   getUserrs(onError, function (users) {
@@ -135,8 +111,12 @@ if (item.comments && item.comments.length > 0) {
     commentDiv.className = "comment";
     commentDiv.innerHTML = `
       <p>${comment.content} - by ${comment.owner}</p>
+        <div class="comment-actions">
+          <span class="thumbup" data-item-id="${item._id}" data-comment-id="${comment._id}">👍 ${comment.likes || 0}</span>
+          <span class="thumbdown" data-item-id="${item._id}" data-comment-id="${comment._id}">👎 ${comment.dislikes || 0}</span>
+        </div>
     `;
-    if (comment.owner == item.owner || username == comment.owner) {
+    if (username == item.owner || username == comment.owner) {
       commentDiv.innerHTML+=`<div type="button" class="icon deletecomment" data-item-id="${item._id}" data-comment-id="${comment._id}">delete</div>`
       
     }
@@ -159,15 +139,8 @@ if (item.comments && item.comments.length > 0) {
   document.querySelector("#comments").prepend(commentElement);
 }
 
-// document.querySelector("#comments").addEventListener("click", function (e) {
-//   if (e.target && e.target.classList.contains("deletecomment")) {
-//     const commentId = e.target.getAttribute("data-id");
-//     console.log("点击了删除按钮，评论 ID:", commentId);
-//     deleteComment(commentId, onError, function () {
-//       update(); // 删除成功后更新页面
-//     });
-//   }
-// });
+
+
 document.querySelector("#comments").addEventListener("click", function (e) {
   if (e.target && e.target.classList.contains("deletecomment")) {
     const itemId = e.target.getAttribute("data-item-id");
@@ -259,4 +232,3 @@ document.addEventListener("DOMContentLoaded", function () {
   update();
   setTimeout(refresh, 50000);
 })();
-
