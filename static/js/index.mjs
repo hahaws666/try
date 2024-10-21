@@ -1,4 +1,4 @@
-import { getUserItem, addItemWithImage, getUserrs, deleteItem, getCurrentUser, addComment, deleteComment } from "./api.mjs";
+import { voteComment, getUserItem, addItemWithImage, getUserrs, deleteItem, getCurrentUser, addComment, deleteComment } from "./api.mjs";
 
 let page = 0; // Current page
 let userItems = []; // Store all user items
@@ -102,59 +102,39 @@ function displayPage() {
     commentElement.className = "commentelement";
 
 
-// Show existing comments
-if (item.comments && item.comments.length > 0) {
-  item.comments.forEach(comment => {
-    if(comment.deleted ==0){
-    // 为每个评论创建单独的 div 容器
-    let commentDiv = document.createElement("div");
-    commentDiv.className = "comment";
-    commentDiv.innerHTML = `
-      <p>${comment.content} - by ${comment.owner}</p>
-        <div class="comment-actions">
-          <span class="thumbup" data-item-id="${item._id}" data-comment-id="${comment._id}">👍 ${comment.likes || 0}</span>
-          <span class="thumbdown" data-item-id="${item._id}" data-comment-id="${comment._id}">👎 ${comment.dislikes || 0}</span>
-        </div>
-    `;
-    if (username == item.owner || username == comment.owner) {
-      commentDiv.innerHTML+=`<div type="button" class="icon deletecomment" data-item-id="${item._id}" data-comment-id="${comment._id}">delete</div>`
-      
+    // Show existing comments
+    if (item.comments && item.comments.length > 0) {
+      item.comments.forEach(comment => {
+        if (comment.deleted == 0) {
+          // 为每个评论创建单独的 div 容器
+          let commentDiv = document.createElement("div");
+          commentDiv.className = "comment";
+          commentDiv.innerHTML = `
+          <p>${comment.content} - by ${comment.owner}</p>
+          <div class="comment-actions">
+          <div class="thumbup" data-item-id="${item._id}" data-comment-id="${comment._id}">likes :${comment.likes}</div>
+          <div class="thumbdown" data-item-id="${item._id}" data-comment-id="${comment._id}">dislikes: ${comment.dislikes}</div>
+          </div>
+         `;
+          if (username == item.owner || username == comment.owner) {
+            commentDiv.innerHTML += `<div type="button" class="icon deletecomment" data-item-id="${item._id}" data-comment-id="${comment._id}">delete</div>`
+
+          }
+
+          commentElement.appendChild(commentDiv);
+        }
+      });
+
+      // 将 commentElement 追加到 #comments 容器中
+      document.querySelector("#comments").prepend(commentElement);
+
+    } else {
+      commentElement.innerHTML = "<p>No comments yet.</p>";
+      document.querySelector("#comments").prepend(commentElement);
     }
 
 
-    // commentDiv.querySelector(".deletecomment").addEventListener("click", function() {
-    //   console.log("删除按钮点击，评论 ID:", comment._id);  // 你可以在这里使用 comment._id 来确认
-    // });
 
-    // 将每个评论的 div 容器追加到 commentElement
-    commentElement.appendChild(commentDiv);
-    }
-  });
-
-  // 将 commentElement 追加到 #comments 容器中
-  document.querySelector("#comments").prepend(commentElement);
-
-} else {
-  commentElement.innerHTML = "<p>No comments yet.</p>";
-  document.querySelector("#comments").prepend(commentElement);
-}
-
-
-
-document.querySelector("#comments").addEventListener("click", function (e) {
-  if (e.target && e.target.classList.contains("deletecomment")) {
-    const itemId = e.target.getAttribute("data-item-id");
-    const commentId = e.target.getAttribute("data-comment-id");
-
-    console.log("点击了删除按钮，评论 ID:", commentId, "项目 ID:", itemId);
-
-    // 调用 API 删除评论，传递 itemId 和 commentId
-    deleteComment(itemId, commentId, onError, function () {
-      console.log("评论删除成功");
-      update(); // 删除成功后更新页面
-    });
-  }
-});
 
 
 
@@ -165,6 +145,50 @@ document.querySelector("#comments").addEventListener("click", function (e) {
         <button type="submit" class="commentsubmit">Submit</button>
       </form>
     `;
+    
+    document.querySelector("#comments").addEventListener("click", function (e) {
+      if (e.target && e.target.classList.contains("deletecomment")) {
+        const itemId = e.target.getAttribute("data-item-id");
+        const commentId = e.target.getAttribute("data-comment-id");
+
+        console.log("点击了删除按钮，评论 ID:", commentId, "项目 ID:", itemId);
+
+        // 调用 API 删除评论，传递 itemId 和 commentId
+        deleteComment(itemId, commentId, onError, function () {
+          console.log("评论删除成功");
+          update(); // 删除成功后更新页面
+        });
+      }
+
+      // 处理 thumbup 点击事件
+      if (e.target && e.target.classList.contains("thumbup")) {
+        const itemId = e.target.getAttribute("data-item-id");
+        const commentId = e.target.getAttribute("data-comment-id");
+
+        console.log("点击了点赞按钮，评论 ID:", commentId, "项目 ID:", itemId);
+
+        // 调用 API 点赞评论
+        voteComment(itemId, commentId, 'up', onError, function () {
+          console.log("点赞成功");
+          update(); // 点赞成功后更新页面
+        });
+      }
+
+      // 处理 thumbdown 点击事件
+      if (e.target && e.target.classList.contains("thumbdown")) {
+        const itemId = e.target.getAttribute("data-item-id");
+        const commentId = e.target.getAttribute("data-comment-id");
+
+        console.log("点击了点踩按钮，评论 ID:", commentId, "项目 ID:", itemId);
+
+        // 调用 API 点踩评论
+        voteComment(itemId, commentId, 'down', onError, function () {
+          console.log("点踩成功");
+          update(); // 点踩成功后更新页面
+        });
+      }
+    });
+
 
     // Handle comment submission
     document.querySelector("#add_comment").addEventListener("submit", function (e) {

@@ -211,9 +211,8 @@ app.post('/api/items/:id/comments', isAuthenticated, function (req, res) {
         createdAt: new Date(),
         deleted: 0,
         likes: 0,      // 初始化点赞数
-        dislikes: 0    // 初始化点踩数
+        dislikes: 0,    // 初始化点踩数
     };
-
     // 将评论添加到项目中
     items.update({ _id: itemId }, { $push: { comments: comment } }, {}, function (err) {
         if (err) return res.status(500).end(err);
@@ -303,30 +302,44 @@ app.patch('/api/items/:itemId/comments/:commentId', isAuthenticated, function (r
 
 
 // 点赞和点踩评论（通过请求 body 参数指定）
-app.post('/api/items/:itemId/comments/:commentId/vote', isAuthenticated, function (req, res) {
+app.patch('/api/items/:itemId/comments/:commentId/vote', isAuthenticated, function (req, res) {
     const { itemId, commentId } = req.params;
-    const { action } = req.body; // action 为 'up' 或 'down'
+    const { action } = req.body; // 期待 'up' 或 'down' 来表示点赞还是点踩
+    console.log(action);
 
-    let updateField;
-    if (action === 'up') {
-        updateField = { $inc: { "comments.$.likes": 1 } };
-    } else if (action === 'down') {
-        updateField = { $inc: { "comments.$.dislikes": 1 } };
-    } else {
-        return res.status(400).json({ error: 'Invalid action' });
-    }
+    items.findOne({_id: itemId}, function(err, item) {
+        if (err) return res.status(500).json({ error: 'Database error' });
+        if (!item) return res.status(404).json({ error: 'Item not found' });
 
-    items.update(
-        { _id: itemId, "comments._id": commentId },
-        updateField,
-        {},
-        function (err, numAffected) {
-            if (err) return res.status(500).json({ error: 'Failed to update comment' });
-            if (numAffected === 0) return res.status(404).json({ error: 'Comment not found' });
-            res.status(200).json({ message: 'Vote updated successfully' });
+        // 找到对应的评论
+        const commentIndex = item.comments.findIndex(c => c._id == commentId);
+        if (commentIndex === -1) return res.status(404).json({ error: 'Comment not found' });
+
+        const comment = item.comments[commentIndex];
+        console.log(comment.likes);
+
+        // 初始化 likes 和 dislikes 为 0 如果尚未存在
+        if (typeof comment.likes !== 'number') comment.likes = 0;
+        if (typeof comment.dislikes !== 'number') comment.dislikes = 0;
+
+        // 根据 action 更新点赞或点踩
+        if (action === 'up') {
+            item.comments[commentIndex].likes += 1;
+        } else if (action === 'down') {
+            item.comments[commentIndex].dislikes += 1;
+        } else {
+            return res.status(400).json({ error: 'Invalid action' });
         }
-    );
+        console.log(comment.likes);
+
+        items.update({ _id: itemId }, item, {}, function (err, numAffected) {
+            if (err) return res.status(500).json({ error: 'Failed to update item' });
+            res.status(200).json({ message: 'Comment voted successfully' });
+        });
+    });
 });
+
+
 
 
 

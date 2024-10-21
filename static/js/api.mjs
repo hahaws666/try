@@ -100,42 +100,22 @@ export function getUserItem(userId, success, fail) {
 	.catch(fail);
   }
   
-  export function thumbUpComment(itemId, commentId,fail,success) {
-	fetch(`/api/items/${itemId}/comments/${commentId}/thumbUp`, { method: "POST" })
-	  .then(success)
-	  .catch(fail);
-  }
-  
-  export function thumbDownComment(itemId, commentId,fail,success) {
-	fetch(`/api/items/${itemId}/comments/${commentId}/thumbDown`, { method: "POST" })
-	  .then(response => {
-		if (response.ok) {
-		  update(); // Reload the item to show updated dislikes
-		} else {
-		  throw new Error("Failed to thumb down comment");
-		}
-	  })
-	  .catch(onError);
-  }
   
 
   export function voteComment(itemId, commentId, action, onError, onSuccess) {
 	fetch(`/api/items/${itemId}/comments/${commentId}/vote`, {
-	  method: 'POST',
+	  method: 'PATCH',
 	  headers: {
 		'Content-Type': 'application/json'
 	  },
-	  body: JSON.stringify({ action })
+	  body: JSON.stringify({ action }) // 发送 'up' 或 'down'
 	})
-	  .then(response => {
-		if (!response.ok) {
-		  return response.text().then(text => { throw new Error(text) });
-		}
-		return response.json();
-	  })
+	  .then(handleReponse)
 	  .then(onSuccess)
 	  .catch(onError);
+	console.log("lallal");
   }
+  
 
   
   export function deleteComment(itemId, commentId, onError, onSuccess) {
