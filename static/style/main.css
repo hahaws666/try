@@ -108,3 +108,31 @@ footer {
 #nav a{
 	text-decoration:none;
 }
+
+
+/* 定义 item 内容的样式 */
+.item {
+  position: relative;
+  margin-bottom: 20px; /* 增加底部间距，避免重叠 */
+  text-align: center; /* 确保文字在图片下方居中 */
+}
+
+.item_image {
+  display: block;
+  margin: 0 auto; /* 使图片居中 */
+  max-width: 100%; /* 使图片宽度自适应容器 */
+  margin-top: 10px; /* 图片与上方内容的间距 */
+}
+
+.item_image img {
+  max-width: 300px; /* 设置图片的最大宽度，可以根据需要调整 */
+  height: auto; /* 自动调整图片高度，保持比例 */
+  display: block;
+  margin: 0 auto;
+}
+
+.item_content {
+  margin-top: 10px; /* 文字与图片之间的间距 */
+  font-size: 16px;
+  font-weight: bold;
+}

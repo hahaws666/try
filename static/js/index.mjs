@@ -19,6 +19,7 @@ if (username) {
   document.querySelector("#users").classList.remove("hidden");
   document.querySelector("#items").classList.remove("hidden");
   document.querySelector("#user_item").classList.remove("hidden");
+
 } else {
   document.querySelector("#signin").classList.remove("hidden");
   document.querySelector("#signup").classList.remove("hidden");
@@ -39,6 +40,8 @@ function update() {
   });
 
   if (inspecting != null) {
+    document.querySelector("#nav").classList.remove("hidden");
+    document.querySelector("#comment-paginations").classList.remove("hidden");
     getUserItem(inspecting, function (items) {
       if (inspecting === username) {
         document.querySelector("#add_item").classList.remove("hidden");
@@ -51,7 +54,6 @@ function update() {
   }
 }
 
-// Function to display the current page (one item at a time)
 function displayPage() {
   // Ensure page is within valid range
   if (page < 0) page = 0;
@@ -67,18 +69,20 @@ function displayPage() {
 
     let element = document.createElement("div");
     element.className = "item";
+    element.innerHTML="";
 
     // Add content
-    element.innerHTML = `<div class="item_content">${item.content}</div>`;
+
 
     // If the item has an image, display it
     if (item.imageUrl) {
       element.innerHTML += `
         <div class="item_image">
-          <img src="${item.imageUrl}" alt="To-Do image" style="max-width: 200px; margin-top: 10px;" />
+          <img src="${item.imageUrl}" alt="To-Do image" />
         </div>
       `;
     }
+    element.innerHTML += `<div class="item_content">${item.content}</div>`;
 
     // If the item belongs to the logged-in user, add a delete option
     if (item.owner === username) {
@@ -120,30 +124,19 @@ function displayPage() {
         commentElement.appendChild(commentDiv);
       });
 
-      document.querySelector("#comment-paginations").innerHTML ="";
-      // Add pagination buttons for comments
-      let paginationDiv = document.createElement("div");
-      paginationDiv.className = "comment-pagination";
-      if (commentPage > 0) {
-        let prevCommentBtn = document.createElement("button");
-        prevCommentBtn.textContent = "Previous Comments";
-        prevCommentBtn.className ="prevcomment";
-        paginationDiv.appendChild(prevCommentBtn);
-      }
-      if (commentPage < totalPages - 1) {
-        let nextCommentBtn = document.createElement("button");
-        nextCommentBtn.textContent = "Next Comments";
-        nextCommentBtn.className="nextcomment";
-        paginationDiv.appendChild(nextCommentBtn);
-      }
-      document.querySelector("#comment-paginations").appendChild(paginationDiv);
-
       // 将 commentElement 追加到 #comments 容器中
       document.querySelector("#comments").prepend(commentElement);
     } else {
       commentElement.innerHTML = "<p>No comments yet.</p>";
       document.querySelector("#comments").prepend(commentElement);
     }
+
+    // Update the visibility and enable/disable of pagination buttons
+    const prevCommentBtn = document.querySelector(".prev-comment");
+    const nextCommentBtn = document.querySelector(".next-comment");
+
+    prevCommentBtn.style.visibility = commentPage > 0 ? "visible" : "hidden";
+    nextCommentBtn.style.visibility = commentPage < totalPages - 1 ? "visible" : "hidden";
 
     // Add the form for adding new comments
     document.querySelector("#comments").innerHTML += `
@@ -162,28 +155,21 @@ function displayPage() {
 
         // 调用 API 删除评论，传递 itemId 和 commentId
         deleteComment(itemId, commentId, onError, function () {
-          console.log("comment deleted success");
-          update(); // 删除成功后更新页面
+          console.log("comment deleted successfully");
+          update();
         });
       }
     });
-
-    document.querySelector("#comment-paginations").addEventListener("click",function(e){
-      if(e.target && e.target.classList.contains("prevcomment")){
-        commentPage --;
-        displayPage();
-      }
-      if (e.target && e.target.classList.contains("nextcomment")) {
-        commentPage ++;
-        displayPage();
-      }
-    })
 
     // Handle comment submission
     document.querySelector("#add_comment").addEventListener("submit", function (e) {
       e.preventDefault();
       const commentContent = document.querySelector("#comment_input").value;
-      addComment(item._id, commentContent, onError, update); // Call API to add comment
+      addComment(item._id, commentContent, onError, function () {
+        console.log("comment added successfully");
+        commentPage = Math.ceil((totalComments + 1) / commentsPerPage) - 1; // 跳到新评论所在的最后一页
+        update();
+      });
     });
 
   } else {
@@ -192,6 +178,20 @@ function displayPage() {
     document.querySelector("#next").style.visibility = "hidden";
   }
 }
+
+// Add event listeners to existing pagination buttons
+document.querySelector(".prev-comment").addEventListener("click", function () {
+  if (commentPage > 0) {
+    commentPage--;
+    displayPage();
+  }
+});
+
+document.querySelector(".next-comment").addEventListener("click", function () {
+  commentPage++;
+  displayPage();
+});
+
 
 document.querySelector("#prev").addEventListener("click", function (e) {
   e.preventDefault();

@@ -2,14 +2,14 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>ToDo</title>
+    <title>webgallery</title>
     <link href="style/main.css" rel="stylesheet" type="text/css" />
     <link href="style/form.css" rel="stylesheet" type="text/css" />
     <script type="module" src="js/index.mjs"></script>
   </head>
   <body>
     <header>
-      <a href="/" id="title">ToDo</a>
+      <a href="/" id="title">wwebgallery</a>
       <a href="/signup.html" id="signup" class="btn header_btn hidden"
         >Sign up</a
       >
@@ -71,14 +71,17 @@
     <div id="users" class="hidden">
 
     </div> 
-    <div id="nav">
+    <div id="nav" class="hidden nav">
         <a href="" id="prev">prev</a>
         <a href="" id="next">next</a>
     </div>
 
     <div id ="comments">
     </div>
-    <div id ="comment-paginations"></div>
+    <div id ="comment-paginations" class="hidden comment-paginations">
+      <div class="next-comment"> next</div>
+      <div class="prev-comment">prev</div>
+    </div>
     <footer>
       <a href="/credits.html">credits</a>
     </footer>
